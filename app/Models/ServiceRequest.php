@@ -10,7 +10,6 @@ class ServiceRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id',
         'resident_id',
         'service_type',
         'description',
@@ -18,20 +17,12 @@ class ServiceRequest extends Model
         'status',
     ];
 
-    /**
-     * Default model attributes.
-     */
     protected $attributes = [
         'status' => 'Pending',
     ];
 
-    public function __construct(array $attributes = [])
+    public function resident()
     {
-        // Ensure default status is 'Pending' if not provided
-        if (!isset($attributes['status'])) {
-            $attributes['status'] = 'Pending';
-        }
-
-        parent::__construct($attributes);
+        return $this->belongsTo(Resident::class);
     }
 }
