@@ -6,47 +6,49 @@ use App\Models\Resident;
 
 class ResidentUpdateResult
 {
-    private bool $success;
-    private bool $notFound;
-    private ?Resident $resident;
-    private array $errors;
+    public const SUCCESS = 'success';
+    public const NOT_FOUND = 'not_found';
+    public const VALIDATION_FAILED = 'validation_failed';
 
-    private function __construct(bool $success, bool $notFound, ?Resident $resident = null, array $errors = [])
+    public string $status;
+    public ?Resident $resident;
+    public array $errors;
+
+    public function __construct(string $status, ?Resident $resident = null, array $errors = [])
     {
-        $this->success = $success;
-        $this->notFound = $notFound;
+        $this->status = $status;
         $this->resident = $resident;
         $this->errors = $errors;
     }
 
     public static function success(Resident $resident): self
     {
-        return new self(true, false, $resident, []);
+        return new self(self::SUCCESS, $resident);
     }
 
     public static function notFound(): self
     {
-        return new self(false, true, null, []);
+        return new self(self::NOT_FOUND, null, ['id' => 'Resident not found.']);
     }
 
     public static function validationFailed(array $errors): self
     {
-        return new self(false, false, null, $errors);
+        return new self(self::VALIDATION_FAILED, null, $errors);
     }
 
     public function isSuccess(): bool
     {
-        return $this->success;
+        return $this->status === self::SUCCESS;
     }
 
     public function isNotFound(): bool
     {
-        return $this->notFound;
+        return $this->status === self::NOT_FOUND;
     }
 
     public function isValidationFailed(): bool
     {
-        return !$this->success && !$this->notFound;
+        return $this->status === self::VALIDATION_FAILED;
     }
 
     public function getResident(): ?Resident
@@ -57,5 +59,10 @@ class ResidentUpdateResult
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
     }
 }

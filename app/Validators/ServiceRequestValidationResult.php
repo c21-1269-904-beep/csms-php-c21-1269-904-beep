@@ -2,7 +2,7 @@
 
 namespace App\Validators;
 
-class ResidentValidationResult
+class ServiceRequestValidationResult
 {
     public bool $isValid;
     public array $errors;
