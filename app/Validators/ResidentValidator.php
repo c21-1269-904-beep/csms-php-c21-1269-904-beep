@@ -2,32 +2,30 @@
 
 namespace App\Validators;
 
-use App\Validators\ResidentValidationResult;
-
 class ResidentValidator
 {
     public function validate(array $data): ResidentValidationResult
     {
         $errors = [];
 
-        if (empty($data['first_name'] ?? null)) {
+        if (!isset($data['first_name']) || trim($data['first_name']) === '') {
             $errors['first_name'] = 'First name is required.';
         }
 
-        if (empty($data['last_name'] ?? null)) {
+        if (!isset($data['last_name']) || trim($data['last_name']) === '') {
             $errors['last_name'] = 'Last name is required.';
         }
 
-        if (empty($data['address'] ?? null)) {
+        if (!isset($data['address']) || trim($data['address']) === '') {
             $errors['address'] = 'Address is required.';
         }
 
-        if (empty($data['contact_number'] ?? null) || !preg_match('/^09\d{9}$/', (string)$data['contact_number'])) {
-            $errors['contact_number'] = 'Invalid contact number format.';
+        if (!isset($data['contact_number']) || trim($data['contact_number']) === '') {
+            $errors['contact_number'] = 'Contact number is required.';
         }
 
-        if (empty($data['email'] ?? null) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Invalid email address.';
+        if (!isset($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Valid email is required.';
         }
 
         if (!empty($errors)) {
@@ -35,5 +33,10 @@ class ResidentValidator
         }
 
         return ResidentValidationResult::success();
+    }
+
+    public function validateUpdate(array $data, int|string $id): ResidentValidationResult
+    {
+        return $this->validate($data);
     }
 }
