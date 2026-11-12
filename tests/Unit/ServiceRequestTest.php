@@ -1,81 +1,101 @@
+
 <?php
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\ServiceRequest;
+use PHPUnit\Framework\TestCase;
 
 class ServiceRequestTest extends TestCase
 {
-    // Test 1 & 2: Service Request can be created and information is accessible
-    public function test_01_service_request_can_be_created_and_information_is_accessible()
+    public function test_service_request_can_be_created(): void
     {
-        $data = [
-            'resident_id' => 25,
-            'service_type' => 'Barangay Clearance',
-            'description' => 'Requesting clearance for employment requirements.',
-            'date_requested' => '2026-10-07',
-        ];
+        $request = new ServiceRequest(
+            25,
+            'Barangay Clearance',
+            'Request for employment requirement',
+            '2026-11-12'
+        );
 
-        $request = new ServiceRequest($data);
+        $this->assertInstanceOf(ServiceRequest::class, $request);
+    }
+
+    public function test_service_request_information_is_accessible(): void
+    {
+        $request = new ServiceRequest(
+            25,
+            'Barangay Clearance',
+            'Request for employment requirement',
+            '2026-11-12'
+        );
 
         $this->assertEquals(25, $request->resident_id);
         $this->assertEquals('Barangay Clearance', $request->service_type);
-        $this->assertEquals('Requesting clearance for employment requirements.', $request->description);
-        $this->assertEquals('2026-10-07', $request->date_requested);
+        $this->assertEquals(
+            'Request for employment requirement',
+            $request->description
+        );
+        $this->assertEquals('2026-11-12', $request->date_requested);
     }
 
-    // Test 3: Resident ID is preserved correctly
-    public function test_02_resident_id_is_preserved()
+    public function test_resident_id_is_preserved(): void
     {
-        $request = new ServiceRequest(['resident_id' => 99]);
+        $request = new ServiceRequest(
+            25,
+            'Certificate Request',
+            'Request for certificate',
+            '2026-11-12'
+        );
 
-        $this->assertEquals(99, $request->resident_id);
+        $this->assertEquals(25, $request->resident_id);
     }
 
-    // Test 4: New Service Request has an unassigned ID before persistence
-    public function test_03_new_service_request_has_unassigned_id()
+    public function test_new_service_request_has_unassigned_id(): void
     {
-        $request = new ServiceRequest([
-            'resident_id' => 10,
-            'service_type' => 'Permit Request',
-        ]);
+        $request = new ServiceRequest(
+            25,
+            'Barangay Clearance',
+            'Employment requirement',
+            '2026-11-12'
+        );
 
         $this->assertNull($request->id);
     }
 
-    // Test 5: New Service Request defaults to Pending status
-    public function test_04_new_service_request_defaults_to_pending()
+    public function test_new_service_request_defaults_to_pending(): void
     {
-        $request = new ServiceRequest([
-            'resident_id' => 15,
-            'service_type' => 'Community Assistance',
-            'description' => 'Medical financial aid',
-            'date_requested' => '2026-10-07',
-        ]);
+        $request = new ServiceRequest(
+            25,
+            'Barangay Clearance',
+            'Employment requirement',
+            '2026-11-12'
+        );
 
         $this->assertEquals('Pending', $request->status);
     }
 
-    // Test 6: Separate Service Request objects retain independent data
-    public function test_05_multiple_service_request_objects_are_independent()
+    public function test_service_request_objects_have_independent_information(): void
     {
-        $req1 = new ServiceRequest([
-            'resident_id' => 1,
-            'service_type' => 'Type A',
-            'description' => 'Desc A',
-        ]);
+        $firstRequest = new ServiceRequest(
+            25,
+            'Barangay Clearance',
+            'Employment requirement',
+            '2026-11-12'
+        );
 
-        $req2 = new ServiceRequest([
-            'resident_id' => 2,
-            'service_type' => 'Type B',
-            'description' => 'Desc B',
-        ]);
+        $secondRequest = new ServiceRequest(
+            30,
+            'Community Assistance',
+            'Medical assistance request',
+            '2026-11-13'
+        );
 
-        $this->assertEquals(1, $req1->resident_id);
-        $this->assertEquals('Type A', $req1->service_type);
+        $this->assertEquals(25, $firstRequest->resident_id);
+        $this->assertEquals(30, $secondRequest->resident_id);
 
-        $this->assertEquals(2, $req2->resident_id);
-        $this->assertEquals('Type B', $req2->service_type);
+        $this->assertEquals('Barangay Clearance', $firstRequest->service_type);
+        $this->assertEquals('Community Assistance', $secondRequest->service_type);
+
+        $this->assertNotSame($firstRequest, $secondRequest);
     }
 }
