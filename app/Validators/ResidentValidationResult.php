@@ -4,12 +4,12 @@ namespace App\Validators;
 
 class ResidentValidationResult
 {
-    public bool $isValid;
-    public array $errors;
+    private bool $valid;
+    private array $errors;
 
-    public function __construct(bool $isValid, array $errors = [])
+    public function __construct(bool $valid, array $errors = [])
     {
-        $this->isValid = $isValid;
+        $this->valid = $valid;
         $this->errors = $errors;
     }
 
@@ -21,5 +21,15 @@ class ResidentValidationResult
     public static function failure(array $errors): self
     {
         return new self(false, $errors);
+    }
+
+    public function isValid(): bool
+    {
+        return $this->valid;
+    }
+
+    public function getErrors(): array
+    {
+        return $this->errors;
     }
 }

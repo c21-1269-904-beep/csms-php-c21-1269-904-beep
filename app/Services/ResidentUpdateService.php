@@ -4,11 +4,12 @@ namespace App\Services;
 
 use App\Repositories\ResidentRepository;
 use App\Validators\ResidentValidator;
+use App\Models\Resident;
 
 class ResidentUpdateService
 {
-    protected ResidentRepository $repository;
-    protected ResidentValidator $validator;
+    private ResidentRepository $repository;
+    private ResidentValidator $validator;
 
     public function __construct(?ResidentRepository $repository = null, ?ResidentValidator $validator = null)
     {
@@ -16,19 +17,34 @@ class ResidentUpdateService
         $this->validator = $validator ?? new ResidentValidator();
     }
 
-    public function update(int|string $id, array $data): ResidentUpdateResult
+    public function update(int $id, array $data): ResidentUpdateResult
     {
-        $resident = $this->repository->findById($id);
-        if (!$resident) {
+        // 1. Retrieve existing resident by ID
+        $existing = $this->repository->findById($id);
+        if (!$existing) {
             return ResidentUpdateResult::notFound();
         }
 
-        $validation = $this->validator->validateUpdate($data, $id);
-        if (!$validation->isValid) {
-            return ResidentUpdateResult::validationFailed($validation->errors);
+        // 2. Build update payload while preserving ID and Status
+        $updatePayload = array_merge($data, [
+            'id' => $existing->id,
+            'status' => $existing->status,
+        ]);
+
+        // 3. Validate using T02 ResidentValidator
+        $validationResult = $this->validator->validate($updatePayload);
+        if (!$validationResult->isValid()) {
+            return ResidentUpdateResult::validationFailed($validationResult->getErrors());
         }
 
-        $updatedResident = $this->repository->update($id, $data);
+        // 4. Update and persist changes
+        $updatedResident = $this->repository->update($id, [
+            'first_name'     => $data['first_name'] ?? $existing->first_name,
+            'last_name'      => $data['last_name'] ?? $existing->last_name,
+            'address'        => $data['address'] ?? $existing->address,
+            'contact_number' => (string) ($data['contact_number'] ?? $existing->contact_number),
+            'email'          => $data['email'] ?? $existing->email,
+        ]);
 
         return ResidentUpdateResult::success($updatedResident);
     }

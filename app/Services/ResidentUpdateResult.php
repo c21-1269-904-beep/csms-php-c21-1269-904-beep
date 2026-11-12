@@ -6,49 +6,47 @@ use App\Models\Resident;
 
 class ResidentUpdateResult
 {
-    public const SUCCESS = 'success';
-    public const NOT_FOUND = 'not_found';
-    public const VALIDATION_FAILED = 'validation_failed';
+    private bool $success;
+    private bool $notFound;
+    private ?Resident $resident;
+    private array $errors;
 
-    public string $status;
-    public ?Resident $resident;
-    public array $errors;
-
-    public function __construct(string $status, ?Resident $resident = null, array $errors = [])
+    private function __construct(bool $success, bool $notFound, ?Resident $resident = null, array $errors = [])
     {
-        $this->status = $status;
+        $this->success = $success;
+        $this->notFound = $notFound;
         $this->resident = $resident;
         $this->errors = $errors;
     }
 
     public static function success(Resident $resident): self
     {
-        return new self(self::SUCCESS, $resident);
+        return new self(true, false, $resident, []);
     }
 
     public static function notFound(): self
     {
-        return new self(self::NOT_FOUND, null, ['id' => 'Resident not found.']);
+        return new self(false, true, null, []);
     }
 
     public static function validationFailed(array $errors): self
     {
-        return new self(self::VALIDATION_FAILED, null, $errors);
+        return new self(false, false, null, $errors);
     }
 
     public function isSuccess(): bool
     {
-        return $this->status === self::SUCCESS;
+        return $this->success;
     }
 
     public function isNotFound(): bool
     {
-        return $this->status === self::NOT_FOUND;
+        return $this->notFound;
     }
 
     public function isValidationFailed(): bool
     {
-        return $this->status === self::VALIDATION_FAILED;
+        return !$this->success && !$this->notFound;
     }
 
     public function getResident(): ?Resident
@@ -59,10 +57,5 @@ class ResidentUpdateResult
     public function getErrors(): array
     {
         return $this->errors;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
     }
 }
