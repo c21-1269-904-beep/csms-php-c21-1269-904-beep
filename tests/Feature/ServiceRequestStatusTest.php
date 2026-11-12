@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Resident;
-use App\Models\ServiceRequest;
+use App\Repositories\ServiceRequestRepository;
 use App\Services\ServiceRequestStatusService;
 use App\Services\ServiceRequestSubmissionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,7 +38,7 @@ class ServiceRequestStatusTest extends TestCase
 
         $this->assertTrue($result->isSuccess());
         $this->assertEquals('In Progress', $result->getServiceRequest()->status);
-        $this->assertEquals('In Progress', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('In Progress', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 2: Pending -> Cancelled
@@ -108,7 +108,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'Completed');
 
         $this->assertTrue($result->isInvalidTransition());
-        $this->assertEquals('Pending', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Pending', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 6: In Progress -> Pending (Invalid Reverse)
@@ -126,7 +126,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'Pending');
 
         $this->assertTrue($result->isInvalidTransition());
-        $this->assertEquals('In Progress', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('In Progress', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 7: Completed is Terminal
@@ -146,7 +146,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'In Progress');
 
         $this->assertTrue($result->isInvalidTransition());
-        $this->assertEquals('Completed', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Completed', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 8: Cancelled is Terminal
@@ -164,7 +164,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'Pending');
 
         $this->assertTrue($result->isInvalidTransition());
-        $this->assertEquals('Cancelled', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Cancelled', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 9: Unsupported Status Rejected
@@ -181,7 +181,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'Approved');
 
         $this->assertTrue($result->isUnsupportedStatus());
-        $this->assertEquals('Pending', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Pending', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 10: Nonexistent Service Request Handled Safely
@@ -204,7 +204,7 @@ class ServiceRequestStatusTest extends TestCase
         ]);
 
         $this->statusService->updateStatus($sub->serviceRequest->id, 'In Progress');
-        $updated = ServiceRequest::find($sub->serviceRequest->id);
+        $updated = (new ServiceRequestRepository())->findById($sub->serviceRequest->id);
 
         $this->assertEquals($sub->serviceRequest->id, $updated->id);
         $this->assertEquals($resident->id, $updated->resident_id);
@@ -214,21 +214,32 @@ class ServiceRequestStatusTest extends TestCase
         $this->assertEquals('In Progress', $updated->status);
     }
 
-    // Test 12: Invalid Transition Does Not Modify Persistence
-    public function test_12_invalid_transition_does_not_modify_persistence()
-    {
-        $resident = Resident::factory()->create(['status' => 'Active']);
-        $sub = $this->submissionService->submit([
-            'resident_id' => $resident->id,
-            'service_type' => 'Clearance',
-            'description' => 'Desc',
-            'date_requested' => '2026-10-08',
-        ]);
+// Test 12: Invalid Transition Does Not Modify Persistence
+public function test_12_invalid_transition_does_not_modify_persistence()
+{
+    $resident = Resident::factory()->create(['status' => 'Active']);
 
-        $this->statusService->updateStatus($sub->serviceRequest->id, 'Completed');
-        $this->assertEquals('Pending', ServiceRequest::find($sub->serviceRequest->id)->status);
-    }
+    $sub = $this->submissionService->submit([
+        'resident_id' => $resident->id,
+        'service_type' => 'Clearance',
+        'description' => 'Desc',
+        'date_requested' => '2026-10-08',
+    ]);
 
+    $result = $this->statusService->updateStatus(
+        $sub->serviceRequest->id,
+        'Completed'
+    );
+
+    // Confirm the invalid transition is rejected
+    $this->assertTrue($result->isInvalidTransition());
+
+    // Confirm the database status remains Pending
+    $updated = (new ServiceRequestRepository())
+        ->findById($sub->serviceRequest->id);
+
+    $this->assertEquals('Pending', $updated->status);
+}
     // Test 13: Same-Status Request Is Rejected
     public function test_13_same_status_request_is_rejected()
     {
@@ -243,7 +254,7 @@ class ServiceRequestStatusTest extends TestCase
         $result = $this->statusService->updateStatus($sub->serviceRequest->id, 'Pending');
 
         $this->assertTrue($result->isInvalidTransition());
-        $this->assertEquals('Pending', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Pending', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 
     // Test 14: Student-Designed Test - Full Sequential Lifecycle Journey
@@ -268,6 +279,6 @@ class ServiceRequestStatusTest extends TestCase
         // Step 3: Verify terminal protection from Completed -> Cancelled
         $step3 = $this->statusService->updateStatus($sub->serviceRequest->id, 'Cancelled');
         $this->assertTrue($step3->isInvalidTransition());
-        $this->assertEquals('Completed', ServiceRequest::find($sub->serviceRequest->id)->status);
+        $this->assertEquals('Completed', (new ServiceRequestRepository())->findById($sub->serviceRequest->id)->status);
     }
 }

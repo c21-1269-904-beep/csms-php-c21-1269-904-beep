@@ -27,10 +27,13 @@ class ServiceRequestStatusService
         $this->repository = $repository ?? new ServiceRequestRepository();
     }
 
-    public function updateStatus(int|string $id, string $requestedStatus): ServiceRequestStatusResult
-    {
+    public function updateStatus(
+        int|string $id,
+        string $requestedStatus
+    ): ServiceRequestStatusResult {
         // 1. Retrieve Service Request
         $request = $this->repository->findById($id);
+
         if (!$request) {
             return ServiceRequestStatusResult::notFound();
         }
@@ -44,19 +47,31 @@ class ServiceRequestStatusService
 
         // 3. Reject same-status requests
         if ($currentStatus === $requestedStatus) {
-            return ServiceRequestStatusResult::invalidTransition($currentStatus, $requestedStatus);
+            return ServiceRequestStatusResult::invalidTransition(
+                $currentStatus,
+                $requestedStatus
+            );
         }
 
         // 4. Enforce transition rules
         $allowedNext = $this->allowedTransitions[$currentStatus] ?? [];
+
         if (!in_array($requestedStatus, $allowedNext, true)) {
-            return ServiceRequestStatusResult::invalidTransition($currentStatus, $requestedStatus);
+            return ServiceRequestStatusResult::invalidTransition(
+                $currentStatus,
+                $requestedStatus
+            );
         }
 
-        // 5. Update only status and save
-        $request->status = $requestedStatus;
-        $request->save();
+        // 5. Persist through ServiceRequestRepository
+        $updatedRequest = $this->repository->update($id, [
+            'status' => $requestedStatus,
+        ]);
 
-        return ServiceRequestStatusResult::success($request);
+        if (!$updatedRequest) {
+            return ServiceRequestStatusResult::notFound();
+        }
+
+        return ServiceRequestStatusResult::success($updatedRequest);
     }
 }
