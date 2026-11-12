@@ -38,21 +38,49 @@ class ServiceRequestRepository
             ->where('id', $id)
             ->first();
 
-        if (!$record) {
-            return null;
+        return $record ? $this->mapToServiceRequest($record) : null;
+    }
+
+    public function findAll(): array
+    {
+        $records = DB::table('service_requests')
+            ->orderByDesc('date_requested')
+            ->orderByDesc('id')
+            ->get();
+
+        return $records->map(
+            fn ($record) => $this->mapToServiceRequest($record)
+        )->all();
+    }
+
+    public function search(
+        ?string $searchTerm = null,
+        ?string $status = null
+    ): array {
+        $query = DB::table('service_requests');
+
+        if ($searchTerm !== null && $searchTerm !== '') {
+            $term = '%' . mb_strtolower($searchTerm) . '%';
+
+            $query->where(function ($subQuery) use ($term) {
+                $subQuery
+                    ->whereRaw('LOWER(service_type) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+            });
         }
 
-        $serviceRequest = new ServiceRequest(
-            (int) $record->resident_id,
-            $record->service_type,
-            $record->description,
-            $record->date_requested
-        );
+        if ($status !== null && $status !== '') {
+            $query->where('status', $status);
+        }
 
-        $serviceRequest->id = (int) $record->id;
-        $serviceRequest->status = $record->status;
+        $records = $query
+            ->orderByDesc('date_requested')
+            ->orderByDesc('id')
+            ->get();
 
-        return $serviceRequest;
+        return $records->map(
+            fn ($record) => $this->mapToServiceRequest($record)
+        )->all();
     }
 
     public function update(int|string $id, array $data): ?ServiceRequest
@@ -78,5 +106,20 @@ class ServiceRequestRepository
         }
 
         return $this->findById($id);
+    }
+
+    private function mapToServiceRequest(object $record): ServiceRequest
+    {
+        $serviceRequest = new ServiceRequest(
+            (int) $record->resident_id,
+            $record->service_type,
+            $record->description,
+            $record->date_requested
+        );
+
+        $serviceRequest->id = (int) $record->id;
+        $serviceRequest->status = $record->status;
+
+        return $serviceRequest;
     }
 }
