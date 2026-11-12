@@ -27,16 +27,6 @@ class ResidentRepository
 
         $resident->save();
 
-return $resident;
-    }
-
-    public function deactivateById(int|string $id): bool
-    {
-        $resident = Resident::find($id);
-        if ($resident) {
-            return $resident->update(['status' => 'Inactive']);
-        }
-
-        return false;
+        return $resident;
     }
 }

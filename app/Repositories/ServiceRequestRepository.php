@@ -54,4 +54,29 @@ class ServiceRequestRepository
 
         return $serviceRequest;
     }
+
+    public function update(int|string $id, array $data): ?ServiceRequest
+    {
+        $request = $this->findById($id);
+
+        if (!$request) {
+            return null;
+        }
+
+        $updates = [];
+
+        if (isset($data['status'])) {
+            $updates['status'] = $data['status'];
+        }
+
+        if (!empty($updates)) {
+            $updates['updated_at'] = now();
+
+            DB::table('service_requests')
+                ->where('id', $id)
+                ->update($updates);
+        }
+
+        return $this->findById($id);
+    }
 }
