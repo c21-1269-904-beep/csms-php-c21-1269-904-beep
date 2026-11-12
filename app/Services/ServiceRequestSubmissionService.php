@@ -37,7 +37,7 @@ class ServiceRequestSubmissionService
         }
 
         // 3. Verify Resident is Active
-        if ($resident->status === 'Inactive') {
+        if ($resident->status !== 'Active') {
             return ServiceRequestSubmissionResult::residentInactive();
         }
 

@@ -2,27 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class ServiceRequest extends Model
+class ServiceRequest
 {
-    use HasFactory;
+    public ?int $id;
 
-    protected $fillable = [
-        'resident_id',
-        'service_type',
-        'description',
-        'date_requested',
-        'status',
-    ];
+    public int $resident_id;
 
-    protected $attributes = [
-        'status' => 'Pending',
-    ];
+    public string $service_type;
 
-    public function resident()
-    {
-        return $this->belongsTo(Resident::class);
+    public string $description;
+
+    public string $date_requested;
+
+    public string $status;
+
+    public function __construct(
+        int $resident_id,
+        string $service_type,
+        string $description,
+        string $date_requested
+    ) {
+        $this->id = null;
+        $this->resident_id = $resident_id;
+        $this->service_type = $service_type;
+        $this->description = $description;
+        $this->date_requested = $date_requested;
+        $this->status = 'Pending';
     }
 }
