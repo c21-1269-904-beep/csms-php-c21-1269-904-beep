@@ -175,8 +175,10 @@
 <div class="container">
 
     <h1>CSMS Dashboard</h1>
+
     <p class="subtitle">
         Community Services Management System overview
+        | Version v{{ config('app.version') }}
     </p>
 
     <nav class="navigation">
@@ -237,7 +239,9 @@
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Open Requests (Pending + In Progress)</div>
+            <div class="stat-label">
+                Open Requests (Pending + In Progress)
+            </div>
             <div class="stat-value">{{ $openRequests }}</div>
         </div>
     </div>
