@@ -108,6 +108,40 @@ class ServiceRequestRepository
         return $this->findById($id);
     }
 
+    /**
+     * Get the total number of service requests.
+     */
+    public function countAll(): int
+    {
+        return DB::table('service_requests')->count();
+    }
+
+    /**
+     * Get the number of service requests with a specific status.
+     */
+    public function countByStatus(string $status): int
+    {
+        return DB::table('service_requests')
+            ->where('status', $status)
+            ->count();
+    }
+
+    /**
+     * Get the most recent service requests.
+     */
+    public function findRecent(int $limit = 5): array
+    {
+        $records = DB::table('service_requests')
+            ->orderByDesc('date_requested')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $records->map(
+            fn ($record) => $this->mapToServiceRequest($record)
+        )->all();
+    }
+
     private function mapToServiceRequest(object $record): ServiceRequest
     {
         $serviceRequest = new ServiceRequest(

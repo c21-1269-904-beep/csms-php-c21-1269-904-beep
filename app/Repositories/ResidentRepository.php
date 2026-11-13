@@ -83,4 +83,22 @@ class ResidentRepository
 
         return $resident->update(['status' => 'Inactive']);
     }
+
+    /**
+     * Get the total number of residents.
+     */
+    public function countAll(): int
+    {
+        return Resident::query()->count();
+    }
+
+    /**
+     * Get the number of residents with a specific status.
+     */
+    public function countByStatus(string $status): int
+    {
+        return Resident::query()
+            ->where('status', $status)
+            ->count();
+    }
 }
