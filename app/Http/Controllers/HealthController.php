@@ -9,9 +9,9 @@ class HealthController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
+            'application' => config('app.name'),
+            'version' => config('app.version'),
             'status' => 'ok',
-            'application' => 'Community Services Management System',
-            'version' => '0.1.0',
         ]);
     }
 }
