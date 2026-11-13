@@ -83,9 +83,11 @@ class ServiceRequestController extends Controller
 
     public function updateStatus(Request $request, int $id): RedirectResponse
     {
+        $submittedStatus = $request->input('status');
+
         $result = $this->statusService->updateStatus(
             $id,
-            (string) $request->input('status')
+            is_string($submittedStatus) ? $submittedStatus : ''
         );
 
         if ($result->isNotFound()) {
